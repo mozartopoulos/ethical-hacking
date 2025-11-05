@@ -9,6 +9,7 @@
 # Full TCP port scan (fast-ish, verbose)
 # Usage: nmap <TARGET_IP> -p- -T4 -v
 nmap <TARGET_IP> -p- -T4 -v
+nmap $target -Pn -sU -sV -T3 --top-ports 25
 
 # Scan specific/interesting ports with service/version/os detection
 # Usage: nmap <TARGET_IP> -p 22,80 -A
