@@ -3,6 +3,9 @@
 #scan the whole network first
 netdiscover -i eth0 -r 10.0.0.1/24
 
+#if it doesn't work (no eth for example) then try ping scan on the whole network
+ifconfig
+nmap 10.0.0.1/24 -T5 -v
 # ------------------------- 
 # Install Rustscan!
 # Download the .deb file from the releases page:
