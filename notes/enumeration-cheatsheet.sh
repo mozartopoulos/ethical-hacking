@@ -15,11 +15,14 @@ nmap $target -sS -T4 -A -p- -vc
 nmap $target -Pn -p- --min-rate 2000 -sC -sV -v
 nmap $target -Pn -sU -sV -T3 --top-ports 25 -v
 
-# Scan specific/interesting ports with service/version/os detection
-nmap <TARGET_IP> -p 22,80 -A
-
 # Do the same but with RustScan
 rustscan -a $target
+
+# Scan specific/interesting ports with service/version/os detection
+nmap $target -p 22,80,335,566,etc -sC -sV -v
+
+# searchsploit then!!
+
 
 # ------------------------- 
 # if found on udp nmap scan the 500/udp   open   isakmp? (or IKE in general) service, then run:
