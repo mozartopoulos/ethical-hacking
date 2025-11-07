@@ -1,23 +1,29 @@
 #!/usr/bin/env bash
-# enumeration-cheatsheet.sh
-# Lab-focused enumeration & initial access cheatsheet (comments explain each step)
-# Use only in authorized, isolated lab environments. Replace placeholders before use.
 
-# -------------------------
+#scan the whole network first
+netdiscover -i eth0 -r 10.0.0.1/24
+
+# ------------------------- 
+# Install Rustscan!
+# Download the .deb file from the releases page:
+# https://github.com/RustScan/RustScan/releases
+# Run the command dpkg -i on the file.
+# ------------------------- 
 # Quick port scans
-# -------------------------
 # Full TCP port scan (fast-ish, verbose)
-# Usage: nmap <TARGET_IP> -p- -T4 -v
+nmap $target -sS -T4 -A -p- -vc
 nmap $target -Pn -p- --min-rate 2000 -sC -sV -v
 nmap $target -Pn -sU -sV -T3 --top-ports 25 -v
 
 # Scan specific/interesting ports with service/version/os detection
-# Usage: nmap <TARGET_IP> -p 22,80 -A
 nmap <TARGET_IP> -p 22,80 -A
 
+# Do the same but with RustScan
+rustscan -a $target
 
+# ------------------------- 
 # if found on udp nmap scan the 500/udp   open   isakmp? (or IKE in general) service, then run:
-#if you don't have it yet, first install:
+# if you don't have it yet, first install:
 sudo apt install ike-scan
 # then run:
 sudo ike-scan -M -A $target
@@ -28,6 +34,7 @@ psk-crack -d /usr/share/wordlists/rockyou.txt hash.txt
 ssh [username that you found earlier)@$target
 # and then if you end up needing to crack a hash, remember to unzip your rockyou list before attempting to use it.
 sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
+# ------------------------- 
 
 # -------------------------
 # HTTP / hosts / basic web checks
@@ -36,27 +43,23 @@ sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
 # Edit and add a line: <TARGET_IP> example.lab
 sudo vim /etc/hosts
 
+# ------------------------- 
 # Run a basic web server/vuln scan (Nikto)
-# Usage: nikto -host <TARGET_IP>
 nikto -host <TARGET_IP>
 
 # -------------------------
 # Directory & vhost fuzzing
 # -------------------------
 # dirsearch (simple)
-# Usage: dirsearch -u http://example.lab
 dirsearch -u http://example.lab
 
 # gobuster directory enumeration
-# Usage: gobuster dir -u http://example.lab/ -w /usr/share/seclists/Discovery/Web-Content/big.txt
 gobuster dir -u http://example.lab/ -w /usr/share/seclists/Discovery/Web-Content/big.txt
 
 # ffuf directory fuzzing
-# Usage: ffuf -w <WORDLIST> -u http://example.lab/FUZZ
 ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://example.lab/FUZZ
 
 # gobuster vhost discovery
-# Usage: gobuster vhost -u http://example.lab/ -w <VHOST_WORDLIST>
 gobuster vhost -u http://example.lab/ -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
 
 # -------------------------
@@ -123,10 +126,3 @@ ps aux
 # Check sudo permissions
 sudo -l
 
-# -------------------------
-# Notes & safety reminders
-# -------------------------
-# - ALWAYS use placeholders like <TARGET_IP>, <ATTACKER_IP>, LAB-BOX in public notes.
-# - DO NOT store or publish real credentials or client-identifying info.
-# - Use isolated lab environments (VMs, containers, or dedicated lab networks).
-# - Keep all content educational and redacted before making public.
