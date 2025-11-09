@@ -1,32 +1,32 @@
 #!/usr/bin/env bash
 
-#scan the whole network first
+#scan the whole network first # only works for ethernet and not tunnel interfaces
 netdiscover -i eth0 -r 10.0.0.1/24
 
 #if it doesn't work (no eth for example) then try ping scan on the whole network
 ifconfig
-nmap 10.0.0.1/24 -T5 -v
-
 #check also other routes that you might have with just a
 route
+nmap 10.0.0.1/24 -T5 -v
 
 # ------------------------- 
 # Install Rustscan!
 # Download the .deb file from the releases page:
 # https://github.com/RustScan/RustScan/releases
-# Run the command dpkg -i on the file.
+# Run the command 
+dpkg -i # on the file.
 # ------------------------- 
 # Quick port scans
 # Full TCP port scan (fast-ish, verbose)
-nmap $target -sS -T4 -A -p- -vc
+nmap $target -sS -T4 -A -p- -v
 nmap $target -Pn -p- --min-rate 2000 -sC -sV -v
 nmap $target -Pn -sU -sV -T3 --top-ports 25 -v
 
 # Do the same but with RustScan
-rustscan -a $target
+rustscan -a $target --ulimit 5000
 
 # Scan specific/interesting ports with service/version/os detection
-nmap $target -p 22,80,335,566,etc -sC -sV -v
+nmap $target -p 22,80 -sC -sV -v
 
 # searchsploit then!!
 
@@ -55,7 +55,10 @@ sudo vim /etc/hosts
 
 # ------------------------- 
 # Run a basic web server/vuln scan (Nikto)
-nikto -host <TARGET_IP>
+nikto -host $target
+
+# for any node.js apps, try to check for SSTI (and if a template engine is being used)
+# if there is an input field, try {{7*7}}
 
 # -------------------------
 # Directory & vhost fuzzing
