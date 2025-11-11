@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# consider autorecon?
+
 #scan the whole network first # only works for ethernet and not tunnel interfaces
 netdiscover -i eth0 -r 10.0.0.1/24
 
