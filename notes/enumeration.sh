@@ -98,6 +98,8 @@ smbclient -L $target # to check for anonymous listing of shares, or -U for defin
 #then, to connect to the share, do:
 smbclient //$target/sharename -U " "%" " #and then, "get" any file you want!
 
+#with any mssql credentials, try impackets mssql
+sudo python3 /usr/share/doc/python3-impacket/examples/mssqlclient.py ARCHETYPE/sql_svc@$target -windows-auth
 
 ########################################
 # 4. CREDENTIAL ATTACKS (LAB ONLY)
