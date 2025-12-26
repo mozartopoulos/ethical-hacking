@@ -77,10 +77,12 @@ nikto -host http://$target
 ##########
 # Dir/VHost Fuzzing
 ##########
-dirsearch -u http://$target
-gobuster dir -u http://example.lab/ -w /usr/share/seclists/Discovery/Web-Content/big.txt
-ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://example.lab/FUZZ
-gobuster vhost -u http://example.lab/ -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
+dirsearch -u http://$target #why not, but better gobuster?
+gobuster dir -u http://$target -w /usr/share/wordlists/dirbuster/directory-list-1.0.txt #pretty good!
+
+ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://$target/FUZZ #too much noise?
+
+gobuster vhost -u http://$target/ -w /usr/share/wordlists/dirb/big.txt #
 
 ##########
 # Manual Web Checks (Burp)
