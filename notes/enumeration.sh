@@ -68,7 +68,7 @@ sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
 sudo vim /etc/hosts
 
 # Basic vulnerability scan
-nikto -host $target
+nikto -host http://$target
 
 # Quick SSTI test (Node/Python templates)
 # Try in inputs:
