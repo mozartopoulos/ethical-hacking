@@ -77,7 +77,7 @@ nikto -host http://$target
 ##########
 # Dir/VHost Fuzzing
 ##########
-dirsearch -u http://example.lab
+dirsearch -u http://$target
 gobuster dir -u http://example.lab/ -w /usr/share/seclists/Discovery/Web-Content/big.txt
 ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://example.lab/FUZZ
 gobuster vhost -u http://example.lab/ -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt
