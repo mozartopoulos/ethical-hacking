@@ -18,19 +18,9 @@ nmap $target -p22,80 -sC -sV -v
 searchsploit <service/version>
 
 
-#usefull tools: ---> revshells, gtfobins, crackstation, 
+#usefull online tools: ---> revshells, gtfobins, crackstation, 
 
-
-# If credentials found
-ssh <user>@$target
-
-# Ensure rockyou is extracted
-sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
-
-########################################
-# 3. WEB ENUMERATION
-########################################
-
+# IF there are http stuff open
 # Add virtual hosts manually
 sudo vim /etc/hosts
 
@@ -45,11 +35,12 @@ nikto -host http://$target
 # Dir/VHost Fuzzing
 ##########
 dirsearch -u http://$target #why not, but better gobuster?
+dirsearch -u http://$target --exclude-status=302 -w /usr/share/dirbuster/wordlists/directory-list-1.0.txt # -x php, etc depending?
+
+ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://$target/FUZZ -fc 302 #try this
+
+gobuster vhost -u http://$target/ -w /usr/share/wordlists/dirb/big.txt # try
 gobuster dir -u http://$target -w /usr/share/wordlists/dirbuster/directory-list-1.0.txt #pretty good!
-
-ffuf -w /usr/share/seclists/Discovery/Web-Content/big.txt -u http://$target/FUZZ #too much noise?
-
-gobuster vhost -u http://$target/ -w /usr/share/wordlists/dirb/big.txt #
 
 ##########
 # Manual Web Checks (Burp)
@@ -57,18 +48,7 @@ gobuster vhost -u http://$target/ -w /usr/share/wordlists/dirb/big.txt #
 # - Look for JS files, hidden params
 # - Check cookies/session tokens
 # - Intercept → Modify → Replay requests
-
-
-##### windows stuff ##########
-
-#for smb, use
-smbclient -L $target # to check for anonymous listing of shares, or -U for defining a user, like anonymous even
-
-#then, to connect to the share, do:
-smbclient //$target/sharename -U " "%" " #and then, "get" any file you want!
-
-#with any mssql credentials, try impackets mssql
-sudo python3 /usr/share/doc/python3-impacket/examples/mssqlclient.py ARCHETYPE/sql_svc@$target -windows-auth
+# 
 
 ########################################
 # 4. CREDENTIAL ATTACKS (LAB ONLY)
@@ -76,6 +56,7 @@ sudo python3 /usr/share/doc/python3-impacket/examples/mssqlclient.py ARCHETYPE/s
 
 hydra -l admin -P /usr/share/seclists/Passwords/darkweb2017-top10000.txt \
 <TARGET_IP> http-post-form "/login:username=^USER^&password=^PASS^:Invalid login"
+
 
 ########################################
 # 5. REVERSE SHELLS & LISTENERS
